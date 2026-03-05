@@ -319,8 +319,8 @@
         <label>Your Name</label>
         <input type="text" id="joinName" placeholder="e.g. Jordan" maxlength="20" />
 
-        <label>Pick an Emoji</label>
-        <div class="emoji-picker" id="joinEmojiPicker"></div>
+        <label>Pick Your Character</label>
+        <div id="joinAvatarPicker" style="display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:16px; max-height:200px; overflow-y:auto;"></div>
 
         <p class="error" id="joinError">Please fill in all fields!</p>
         <button class="btn btn-primary" onclick="joinRoom()">Join Game →</button>

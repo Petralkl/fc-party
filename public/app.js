@@ -43,7 +43,7 @@ let roundNum = 0;
 // ── SIGN IN ────────────────────────────────────────
 signInAnonymously(auth).then((result) => {
   currentUser = result.user;
-  buildEmojiPickers();
+  loadAvatars(); // ← add this
 });
 
 // ── EMOJI PICKERS ──────────────────────────────────
@@ -421,7 +421,7 @@ async function loadHostResults(code) {
   document.getElementById("hostResultsLeaderboard").innerHTML = sorted.map(([uid, p], i) => `
     <div style="display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid #2a2a4a;">
       <span style="font-size:1.2rem;">${medals[i] || `${i + 1}.`}</span>
-      <span style="font-size:1.2rem;">${p.emoji}</span>
+      <span style="font-size:1.2rem;"><img src="${p.avatar}" style="width:32px; height:32px; border-radius:50%; object-fit:cover; object-position:top;" /></span>
       <span style="font-weight:600; flex:1;">${p.name}</span>
       <span style="color:#f5c842; font-weight:900;">${p.score} pts</span>
     </div>
@@ -458,7 +458,8 @@ window.joinRoom = async function() {
 
   await set(ref(db, `rooms/${code}/players/${currentUser.uid}`), {
     name: name,
-    emoji: selectedEmoji,
+    avatar: selectedAvatar?.imageUrl || loadedAvatars[0]?.imageUrl,
+    avatarName: selectedAvatar?.character || loadedAvatars[0]?.character,
     score: 0,
     isHost: false
   });
@@ -515,10 +516,13 @@ function renderPlayerList(containerId, players) {
     const div = document.createElement("div");
     div.className = "player-item";
     div.innerHTML = `
-      <span class="player-emoji">${player.emoji}</span>
-      <span class="player-name">${player.name}</span>
-      ${player.isHost ? '<span style="color:#f5c842;font-size:0.7rem;letter-spacing:2px">HOST</span>' : ''}
-      ${uid === currentUser.uid && !player.isHost ? '<span class="player-you">YOU</span>' : ''}
+      <img src="${player.avatar}" style="width:40px; height:40px; border-radius:50%; object-fit:cover; object-position:top; flex-shrink:0;" />
+      <div>
+        <div class="player-name">${player.name}</div>
+        <div style="font-size:0.7rem; color:#888;">${player.avatarName || ""}</div>
+      </div>
+      ${player.isHost ? '<span style="color:#f5c842;font-size:0.7rem;letter-spacing:2px; margin-left:auto;">HOST</span>' : ''}
+      ${uid === currentUser.uid ? '<span class="player-you" style="margin-left:auto;">YOU</span>' : ''}
     `;
     container.appendChild(div);
   });
@@ -547,6 +551,121 @@ const PEOPLE = [
   { name: "Morgan Freeman", department: "Acting" },
   { name: "Viola Davis", department: "Acting" }
 ];
+
+// ── AVATAR CHARACTERS ─────────────────────────────
+const AVATAR_CHARACTERS = [
+  { character: "The Joker", actor: "Heath Ledger", movie: "The Dark Knight" },
+  { character: "Forrest Gump", actor: "Tom Hanks", movie: "Forrest Gump" },
+  { character: "Tony Stark", actor: "Robert Downey Jr.", movie: "Iron Man" },
+  { character: "Patrick Bateman", actor: "Christian Bale", movie: "American Psycho" },
+  { character: "Hannibal Lecter", actor: "Anthony Hopkins", movie: "The Silence of the Lambs" },
+  { character: "Tyler Durden", actor: "Brad Pitt", movie: "Fight Club" },
+  { character: "Vito Corleone", actor: "Marlon Brando", movie: "The Godfather" },
+  { character: "Ellen Ripley", actor: "Sigourney Weaver", movie: "Alien" },
+  { character: "Jules Winnfield", actor: "Samuel L. Jackson", movie: "Pulp Fiction" },
+  { character: "Clarice Starling", actor: "Jodie Foster", movie: "The Silence of the Lambs" },
+  { character: "Amy Dunne", actor: "Rosamund Pike", movie: "Gone Girl" },
+  { character: "Jack Torrance", actor: "Jack Nicholson", movie: "The Shining" },
+  { character: "Travis Bickle", actor: "Robert De Niro", movie: "Taxi Driver" },
+  { character: "Neo", actor: "Keanu Reeves", movie: "The Matrix" },
+  { character: "Leia Organa", actor: "Carrie Fisher", movie: "Star Wars" },
+  { character: "Indiana Jones", actor: "Harrison Ford", movie: "Raiders of the Lost Ark" },
+  { character: "Maximus", actor: "Russell Crowe", movie: "Gladiator" },
+  { character: "Amélie", actor: "Audrey Tautou", movie: "Amélie" },
+  { character: "Marge Gunderson", actor: "Frances McDormand", movie: "Fargo" },
+  { character: "Ofelia", actor: "Ivana Baquero", movie: "Pan's Labyrinth" }
+];
+
+let loadedAvatars = [];
+let selectedAvatar = null;
+
+async function loadAvatars() {
+  const results = await Promise.all(
+    AVATAR_CHARACTERS.map(async (c) => {
+      try {
+        // Search for the movie
+        const movieRes = await fetch(
+          `${TMDB_BASE}/search/movie?query=${encodeURIComponent(c.movie)}`,
+          { headers: tmdbHeaders }
+        );
+        const movieData = await movieRes.json();
+        const movie = movieData.results?.[0];
+        if (!movie) return null;
+
+        // Get the cast of that movie
+        const castRes = await fetch(
+          `${TMDB_BASE}/movie/${movie.id}/credits`,
+          { headers: tmdbHeaders }
+        );
+        const castData = await castRes.json();
+
+        // Find the actor in the cast
+        const castMember = castData.cast?.find(p =>
+          p.name.toLowerCase().includes(c.actor.split(" ")[1]?.toLowerCase() || c.actor.toLowerCase())
+        );
+
+        if (!castMember?.profile_path) return null;
+
+        return {
+          character: c.character,
+          actor: c.actor,
+          imageUrl: `https://image.tmdb.org/t/p/w185${castMember.profile_path}`
+        };
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  loadedAvatars = results.filter(Boolean);
+  console.log("Avatars loaded:", loadedAvatars.length, loadedAvatars);
+  renderAvatarPickers();
+}
+
+function renderAvatarPickers() {
+  renderAvatarGrid("hostAvatarPicker", "host");
+  renderAvatarGrid("joinAvatarPicker", "join");
+}
+
+function renderAvatarGrid(containerId, prefix) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = "";
+
+  loadedAvatars.forEach((avatar, i) => {
+    const div = document.createElement("div");
+    div.style.cssText = `
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 10px;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    `;
+    div.innerHTML = `
+      <img src="${avatar.imageUrl}" 
+        style="width:60px; height:60px; border-radius:50%; object-fit:cover; object-position:top;" />
+      <span style="font-size:0.6rem; color:#888; text-align:center; max-width:64px; line-height:1.2;">${avatar.character}</span>
+    `;
+    div.onclick = () => selectAvatar(avatar, containerId, div);
+    container.appendChild(div);
+  });
+}
+
+function selectAvatar(avatar, containerId, el) {
+  selectedAvatar = avatar;
+  document.querySelectorAll(`#${containerId} > div`).forEach(d => {
+    d.style.borderColor = "transparent";
+    d.style.background = "transparent";
+  });
+  el.style.borderColor = "#f5c842";
+  el.style.background = "rgba(245,200,66,0.08)";
+}
+
+
 
 async function fetchRandomDirector() {
   const person = PEOPLE[Math.floor(Math.random() * PEOPLE.length)];
@@ -971,7 +1090,7 @@ async function loadResultsScreen() {
   document.getElementById("leaderboard").innerHTML = sorted.map(([uid, p], i) => `
     <div style="display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid #2a2a4a;">
       <span style="font-size:1.3rem;">${medals[i] || `${i + 1}.`}</span>
-      <span style="font-size:1.2rem;">${p.emoji}</span>
+      <span style="font-size:1.2rem;"><img src="${p.avatar}" style="width:32px; height:32px; border-radius:50%; object-fit:cover; object-position:top;" />i}</span>
       <span style="font-weight:600; flex:1;">${p.name}</span>
       <span style="color:#f5c842; font-weight:900; font-size:1.1rem;">${p.score} pts</span>
     </div>
@@ -1040,7 +1159,7 @@ async function loadEndGameScreen() {
       ${uid === currentUser.uid ? "background:rgba(245,200,66,0.05); margin:0 -24px; padding:12px 24px;" : ""}
     ">
       <span style="font-size:1.2rem; min-width:28px;">${medals[i] || `${i + 1}.`}</span>
-      <span style="font-size:1.2rem;">${p.emoji}</span>
+      <span style="font-size:1.2rem;"><img src="${p.avatar}" style="width:32px; height:32px; border-radius:50%; object-fit:cover; object-position:top;" />i}</span>
       <span style="font-weight:600; flex:1; ${uid === currentUser.uid ? "color:#f5c842;" : ""}">${p.name}</span>
       <span style="color:#f5c842; font-weight:900;">${p.score} pts</span>
     </div>
