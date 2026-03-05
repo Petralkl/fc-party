@@ -400,11 +400,9 @@ async function updateHostLiveLeaderboard(code, allAnswers) {
   document.getElementById("hostLiveLeaderboard").innerHTML = scores.map(({ uid, player, correct, total }, i) => `
     <div style="display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid #2a2a4a;">
       <span style="font-size:1.2rem; min-width:28px;">${medals[i] || `${i + 1}.`}</span>
-      <span style="font-size:1.2rem;">${player.emoji}</span>
-      <span style="font-weight:600; flex:1;">${player.name}</span>
+      <img src="${player.avatar}" style="width:32px; height:32px; border-radius:50%; object-fit:cover; object-position:top;" />      <span style="font-weight:600; flex:1;">${player.name}</span>
       <span style="color:#888; font-size:0.8rem;">${correct}✓ / ${total} submitted</span>
-      <span style="color:#f5c842; font-weight:900;">${player.score + (correct * 100)} pts</span>
-    </div>
+      <span style="color:#f5c842; font-weight:900;">${player.score + (correct * (window.currentPointsPerAnswer || 100))} pts</span>    </div>
   `).join("") || "<p style='color:#888'>No answers yet...</p>";
 }
 
@@ -554,71 +552,27 @@ const PEOPLE = [
 
 // ── AVATAR CHARACTERS ─────────────────────────────
 const AVATAR_CHARACTERS = [
-  { character: "The Joker", actor: "Heath Ledger", movie: "The Dark Knight" },
-  { character: "Forrest Gump", actor: "Tom Hanks", movie: "Forrest Gump" },
-  { character: "Tony Stark", actor: "Robert Downey Jr.", movie: "Iron Man" },
-  { character: "Patrick Bateman", actor: "Christian Bale", movie: "American Psycho" },
-  { character: "Hannibal Lecter", actor: "Anthony Hopkins", movie: "The Silence of the Lambs" },
-  { character: "Tyler Durden", actor: "Brad Pitt", movie: "Fight Club" },
-  { character: "Vito Corleone", actor: "Marlon Brando", movie: "The Godfather" },
-  { character: "Ellen Ripley", actor: "Sigourney Weaver", movie: "Alien" },
-  { character: "Jules Winnfield", actor: "Samuel L. Jackson", movie: "Pulp Fiction" },
-  { character: "Clarice Starling", actor: "Jodie Foster", movie: "The Silence of the Lambs" },
-  { character: "Amy Dunne", actor: "Rosamund Pike", movie: "Gone Girl" },
-  { character: "Jack Torrance", actor: "Jack Nicholson", movie: "The Shining" },
-  { character: "Travis Bickle", actor: "Robert De Niro", movie: "Taxi Driver" },
-  { character: "Neo", actor: "Keanu Reeves", movie: "The Matrix" },
-  { character: "Leia Organa", actor: "Carrie Fisher", movie: "Star Wars" },
-  { character: "Indiana Jones", actor: "Harrison Ford", movie: "Raiders of the Lost Ark" },
-  { character: "Maximus", actor: "Russell Crowe", movie: "Gladiator" },
-  { character: "Amélie", actor: "Audrey Tautou", movie: "Amélie" },
-  { character: "Marge Gunderson", actor: "Frances McDormand", movie: "Fargo" },
-  { character: "Ofelia", actor: "Ivana Baquero", movie: "Pan's Labyrinth" }
+  { character: "Amélie", imageUrl: "avatars/amelie.jpg" },
+  { character: "Patrick Bateman", imageUrl: "avatars/bateman.jpg" },
+  { character: "Beatrix Kiddo", imageUrl: "avatars/bride.jpg" },
+  { character: "Amy Dunne", imageUrl: "avatars/dunne.jpg" },
+  { character: "Ellen Ripley", imageUrl: "avatars/ellen.jpg" },
+  { character: "Forrest Gump", imageUrl: "avatars/forrest.jpg" },
+  { character: "Hannibal Lecter", imageUrl: "avatars/hannibal.jpg" },
+  { character: "The Joker", imageUrl: "avatars/joker.jpg" },
+  { character: "Katniss Everdeen", imageUrl: "avatars/katniss.jpg" },
+  { character: "Mia Wallace", imageUrl: "avatars/mia.jpg" },
+  { character: "Miranda Priestly", imageUrl: "avatars/priestly.jpg" },
+  { character: "Tony Stark", imageUrl: "avatars/tony.jpg" },
+  { character: "Tyler Durden", imageUrl: "avatars/tyler.jpg" },
+  { character: "Vito Corleone", imageUrl: "avatars/vito.jpg" },
 ];
 
 let loadedAvatars = [];
 let selectedAvatar = null;
 
 async function loadAvatars() {
-  const results = await Promise.all(
-    AVATAR_CHARACTERS.map(async (c) => {
-      try {
-        // Search for the movie
-        const movieRes = await fetch(
-          `${TMDB_BASE}/search/movie?query=${encodeURIComponent(c.movie)}`,
-          { headers: tmdbHeaders }
-        );
-        const movieData = await movieRes.json();
-        const movie = movieData.results?.[0];
-        if (!movie) return null;
-
-        // Get the cast of that movie
-        const castRes = await fetch(
-          `${TMDB_BASE}/movie/${movie.id}/credits`,
-          { headers: tmdbHeaders }
-        );
-        const castData = await castRes.json();
-
-        // Find the actor in the cast
-        const castMember = castData.cast?.find(p =>
-          p.name.toLowerCase().includes(c.actor.split(" ")[1]?.toLowerCase() || c.actor.toLowerCase())
-        );
-
-        if (!castMember?.profile_path) return null;
-
-        return {
-          character: c.character,
-          actor: c.actor,
-          imageUrl: `https://image.tmdb.org/t/p/w185${castMember.profile_path}`
-        };
-      } catch {
-        return null;
-      }
-    })
-  );
-
-  loadedAvatars = results.filter(Boolean);
-  console.log("Avatars loaded:", loadedAvatars.length, loadedAvatars);
+  loadedAvatars = AVATAR_CHARACTERS;
   renderAvatarPickers();
 }
 
@@ -635,21 +589,20 @@ function renderAvatarGrid(containerId, prefix) {
   loadedAvatars.forEach((avatar, i) => {
     const div = document.createElement("div");
     div.style.cssText = `
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      cursor: pointer;
-      padding: 6px;
-      border-radius: 10px;
-      border: 2px solid transparent;
-      transition: all 0.2s;
-    `;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  padding: 3px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  transition: all 0.2s;
+`;
     div.innerHTML = `
-      <img src="${avatar.imageUrl}" 
-        style="width:60px; height:60px; border-radius:50%; object-fit:cover; object-position:top;" />
-      <span style="font-size:0.6rem; color:#888; text-align:center; max-width:64px; line-height:1.2;">${avatar.character}</span>
-    `;
+  <img src="${avatar.imageUrl}" 
+    style="width:48px; height:48px; border-radius:50%; object-fit:cover; object-position:top;" />
+`;
     div.onclick = () => selectAvatar(avatar, containerId, div);
     container.appendChild(div);
   });
@@ -818,7 +771,7 @@ function loadGameScreen(code) {
       `${acceptedMovies.length} films in the database`;
     document.getElementById("roundNum").textContent = prompt.currentRound || 1;
 
-    startTimer(99999, code);
+    startTimer(prompt.timerSeconds || 99999, code);
   }, { onlyOnce: true });
 
   // Listen for results
@@ -832,18 +785,25 @@ function loadGameScreen(code) {
 
 // ── TIMER ──────────────────────────────────────────
 function startTimer(seconds, code) {
+  clearInterval(timerInterval);
   secondsLeft = seconds;
-    document.getElementById("timerNum").textContent = "∞";
+  const infinite = seconds >= 99999;
+
+  document.getElementById("timerNum").textContent = infinite ? "∞" : secondsLeft;
   document.getElementById("timerBar").style.width = "100%";
 
   timerInterval = setInterval(() => {
     secondsLeft--;
-    document.getElementById("timerNum").textContent = "∞";
-    document.getElementById("timerBar").style.width = "100%";
 
+    if (infinite) {
+      document.getElementById("timerNum").textContent = "∞";
+      document.getElementById("timerBar").style.width = "100%";
+    } else {
+      document.getElementById("timerNum").textContent = secondsLeft;
+      document.getElementById("timerBar").style.width = `${(secondsLeft / seconds) * 100}%`;
+    }
 
-    // Turn red when low
-    if (secondsLeft <= 5) {
+    if (!infinite && secondsLeft <= 5) {
       document.getElementById("timerBar").style.background = "#e74c3c";
       document.getElementById("timerNum").style.color = "#e74c3c";
     }
@@ -851,11 +811,10 @@ function startTimer(seconds, code) {
     if (secondsLeft <= 0) {
       clearInterval(timerInterval);
       document.getElementById("answerInput").disabled = true;
-      if (isHost) endRound(code);
+      if (isHost) endRound();
     }
   }, 1000);
 }
-
 
 // ── ANSWER SEARCH DROPDOWN ─────────────────────────
 let searchTimeout = null;
@@ -1159,7 +1118,7 @@ async function loadEndGameScreen() {
       ${uid === currentUser.uid ? "background:rgba(245,200,66,0.05); margin:0 -24px; padding:12px 24px;" : ""}
     ">
       <span style="font-size:1.2rem; min-width:28px;">${medals[i] || `${i + 1}.`}</span>
-      <span style="font-size:1.2rem;"><img src="${p.avatar}" style="width:32px; height:32px; border-radius:50%; object-fit:cover; object-position:top;" />i}</span>
+      <span style="font-size:1.2rem;"><img src="${p.avatar}" style="width:32px; height:32px; border-radius:50%; object-fit:cover; object-position:top;" /></span>
       <span style="font-weight:600; flex:1; ${uid === currentUser.uid ? "color:#f5c842;" : ""}">${p.name}</span>
       <span style="color:#f5c842; font-weight:900;">${p.score} pts</span>
     </div>

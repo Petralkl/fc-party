@@ -311,7 +311,7 @@
     </div>
 
       <!-- JOIN TAB -->
-      <div class="section" id="joinSection">
+      <div class="section" id="joinSection" style="overflow:hidden;">
         <label>Room Code</label>
         <input type="text" id="joinCode" placeholder="e.g. ABC123" maxlength="6"
           style="text-transform:uppercase; letter-spacing: 4px; font-size: 1.3rem;" />
@@ -320,7 +320,10 @@
         <input type="text" id="joinName" placeholder="e.g. Jordan" maxlength="20" />
 
         <label>Pick Your Character</label>
-        <div id="joinAvatarPicker" style="display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:16px; max-height:200px; overflow-y:auto;"></div>
+        <div id="joinAvatarPicker" style="display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-bottom:16px; width:100%;"></div>
+
+
+
 
         <p class="error" id="joinError">Please fill in all fields!</p>
         <button class="btn btn-primary" onclick="joinRoom()">Join Game →</button>
