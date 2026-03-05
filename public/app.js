@@ -475,9 +475,9 @@ function showHostLobby(code) {
     const players = snapshot.val() || {};
     renderPlayerList("hostPlayersList", players);
     const count = Object.keys(players).length;
-    document.getElementById("startBtn").disabled = count < 2;
+    document.getElementById("startBtn").disabled = count < 1;
     document.getElementById("startBtn").textContent =
-      count < 2 ? `Waiting for players... (${count}/2 min)` : `Start Game with ${count} Players →`;
+    count < 1 ? `Waiting for players...` : `Start Game with ${count} Players →`;
   });
 }
 
