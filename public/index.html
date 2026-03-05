@@ -298,16 +298,17 @@
       </div>
 
       <!-- HOST TAB -->
-      <div class="section active" id="hostSection">
-        <label>Your Name</label>
-        <input type="text" id="hostName" placeholder="e.g. Alex" maxlength="20" />
-
-        <label>Pick an Emoji</label>
-        <div class="emoji-picker" id="hostEmojiPicker"></div>
-
-        <p class="error" id="hostError">Please enter your name!</p>
-        <button class="btn btn-primary" onclick="createRoom()">Create Room →</button>
-      </div>
+    <div class="section active" id="hostSection">
+      <button class="btn btn-primary" style="margin-bottom:12px;" onclick="startQuickGame()">
+        ⚡ Quick Game
+      </button>
+      <p style="color:#888; font-size:0.75rem; text-align:center; margin-bottom:12px; letter-spacing:1px;">Random directors, instant start</p>
+      
+      <button class="btn" style="background:transparent; border:1px solid #f5c842; color:#f5c842;" onclick="showCustomSetup()">
+        🎬 Custom Game
+      </button>
+      <p style="color:#888; font-size:0.75rem; text-align:center; margin-top:8px; letter-spacing:1px;">Build your own round list</p>
+    </div>
 
       <!-- JOIN TAB -->
       <div class="section" id="joinSection">
@@ -549,6 +550,115 @@
     <button class="btn btn-primary" onclick="nextRound()">Next Round →</button>
     <button class="btn" style="background:transparent; border:1px solid #444; color:#888;" onclick="endGame()">End Game</button>
   </div>
+
+</div>
+
+<!-- CUSTOM GAME SETUP SCREEN -->
+<div id="customSetupScreen" style="display:none; flex-direction:column; align-items:center; width:100%; max-width:560px;">
+  
+  <div style="display:flex; align-items:center; gap:12px; width:100%; margin-bottom:24px;">
+    <button onclick="hideCustomSetup()" style="background:transparent; border:none; color:#888; font-size:1.2rem; cursor:pointer;">←</button>
+    <h2 style="color:#f5c842; font-family:inherit; font-size:1.3rem;">Custom Game Setup</h2>
+  </div>
+
+  <!-- Search bar -->
+  <div style="background:#1a1a2e; border:1px solid #2a2a4a; border-radius:16px; padding:24px; width:100%; margin-bottom:20px;">
+    <div style="font-size:0.7rem; letter-spacing:4px; text-transform:uppercase; color:#888; margin-bottom:12px;">Search Director or Actor</div>
+    
+    <div style="position:relative;">
+      <input type="text" id="personSearch" placeholder="e.g. Christopher Nolan, Meryl Streep..."
+        style="width:100%; margin-bottom:0;"
+        oninput="searchPerson(this.value)" />
+      
+      <!-- Person search dropdown -->
+      <div id="personDropdown" style="
+        display:none;
+        position:absolute;
+        top:100%; left:0; right:0;
+        background:#1a1a2e;
+        border:1px solid #f5c842;
+        border-radius:0 0 12px 12px;
+        z-index:100;
+        max-height:220px;
+        overflow-y:auto;
+      "></div>
+    </div>
+
+    <!-- Selected person preview -->
+    <div id="selectedPersonPreview" style="display:none; margin-top:16px; padding:12px; background:#0f0f1a; border-radius:10px; flex-direction:column; gap:10px;">
+  <div style="display:flex; align-items:center; gap:12px;">
+    <img id="selectedPersonImg" src="" style="width:44px; height:44px; border-radius:50%; object-fit:cover;" />
+    <div>
+      <div id="selectedPersonName" style="font-weight:700; font-size:1rem;"></div>
+      <div id="selectedPersonKnownFor" style="font-size:0.75rem; color:#888;"></div>
+    </div>
+  </div>
+  <div style="font-size:0.7rem; letter-spacing:3px; text-transform:uppercase; color:#888; margin-top:4px;">They are a...</div>
+  <div style="display:flex; gap:8px;">
+    <button id="deptDirector" onclick="setDepartment('Directing')" style="flex:1; padding:10px; font-size:0.85rem; background:transparent; border:1px solid #2a2a4a; color:#888; cursor:pointer; border-radius:8px; transition:all 0.2s;">
+      🎬 Director
+    </button>
+    <button id="deptActor" onclick="setDepartment('Acting')" style="flex:1; padding:10px; font-size:0.85rem; background:transparent; border:1px solid #2a2a4a; color:#888; cursor:pointer; border-radius:8px; transition:all 0.2s;">
+      🎭 Actor / Actress
+    </button>
+  </div>
+</div>
+
+  <!-- Round settings -->
+  <div style="background:#1a1a2e; border:1px solid #2a2a4a; border-radius:16px; padding:24px; width:100%; margin-bottom:20px;">
+    <div style="font-size:0.7rem; letter-spacing:4px; text-transform:uppercase; color:#888; margin-bottom:16px;">Round Settings</div>
+
+    <div style="display:flex; gap:12px; margin-bottom:16px;">
+      <div style="flex:1;">
+        <label>Time Limit</label>
+        <select id="roundTimeLimit" style="
+          width:100%; background:#0f0f1a; border:1px solid #2a2a4a;
+          border-radius:8px; color:white; font-size:0.95rem;
+          padding:12px 16px; outline:none; font-family:inherit;
+        ">
+          <option value="0">No Limit ∞</option>
+          <option value="30">30 seconds</option>
+          <option value="60" selected>60 seconds</option>
+          <option value="90">90 seconds</option>
+          <option value="120">2 minutes</option>
+        </select>
+      </div>
+
+      <div style="flex:1;">
+        <label>Points Per Answer</label>
+        <select id="roundPoints" style="
+          width:100%; background:#0f0f1a; border:1px solid #2a2a4a;
+          border-radius:8px; color:white; font-size:0.95rem;
+          padding:12px 16px; outline:none; font-family:inherit;
+        ">
+          <option value="50">50 pts</option>
+          <option value="100" selected>100 pts</option>
+          <option value="200">200 pts</option>
+          <option value="500">500 pts</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="addRound()" id="addRoundBtn" disabled>
+      + Add Round
+    </button>
+  </div>
+
+  <!-- Round list -->
+  <div style="background:#1a1a2e; border:1px solid #2a2a4a; border-radius:16px; padding:24px; width:100%; margin-bottom:20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <div style="font-size:0.7rem; letter-spacing:4px; text-transform:uppercase; color:#888;">Round List</div>
+      <div style="font-size:0.75rem; color:#888;" id="roundCountLabel">0 rounds added</div>
+    </div>
+    <div id="roundList">
+      <p style="color:#888; font-size:0.85rem; text-align:center; padding:20px 0;">No rounds added yet — search for a director or actor above!</p>
+    </div>
+  </div>
+
+  <p class="error" id="customSetupError" style="display:none; margin-bottom:12px;">Please add at least 1 round!</p>
+  <button class="btn btn-primary" onclick="createCustomRoom()" id="createCustomBtn" disabled>
+    Create Room →
+  </button>
 
 </div>
 
