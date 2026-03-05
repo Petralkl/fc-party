@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FC Party 🎬</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f0f1a;
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 3rem;
+      color: #f5c842;
+      margin-bottom: 8px;
+      letter-spacing: -1px;
+    }
+
+    .tagline {
+      color: #888;
+      margin-bottom: 40px;
+      font-size: 0.95rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .card {
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      border-radius: 16px;
+      padding: 36px;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 28px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      background: #0f0f1a;
+      color: #888;
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      background: #f5c842;
+      color: #0f0f1a;
+    }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    label {
+      display: block;
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 8px;
+    }
+
+    input {
+      width: 100%;
+      background: #0f0f1a;
+      border: 1px solid #2a2a4a;
+      border-radius: 8px;
+      color: white;
+      font-size: 1rem;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus { border-color: #f5c842; }
+
+    .emoji-picker {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .emoji-btn {
+      font-size: 1.5rem;
+      background: #0f0f1a;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .emoji-btn.selected {
+      border-color: #f5c842;
+      background: #1a1a2e;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 1px;
+    }
+
+    .btn-primary {
+      background: #f5c842;
+      color: #0f0f1a;
+    }
+
+    .btn-primary:hover {
+      background: #ffd700;
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .error {
+      color: #e74c3c;
+      font-size: 0.85rem;
+      margin-top: -8px;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    /* Lobby screen */
+    #lobbyScreen, #playerLobbyScreen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .room-code-box {
+      background: #1a1a2e;
+      border: 2px solid #f5c842;
+      border-radius: 16px;
+      padding: 30px 40px;
+      text-align: center;
+      margin-bottom: 24px;
+      width: 100%;
+    }
+
+    .room-code-label {
+      font-size: 0.7rem;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 8px;
+    }
+
+    .room-code {
+      font-size: 3.5rem;
+      font-weight: 900;
+      color: #f5c842;
+      letter-spacing: 12px;
+    }
+
+    .players-list {
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      border-radius: 16px;
+      padding: 20px;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+
+    .players-title {
+      font-size: 0.7rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 16px;
+    }
+
+    .player-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #2a2a4a;
+      animation: slideIn 0.3s ease;
+    }
+
+    .player-item:last-child { border-bottom: none; }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .player-emoji { font-size: 1.5rem; }
+    .player-name { font-size: 1rem; font-weight: 600; }
+    .player-you {
+      margin-left: auto;
+      font-size: 0.7rem;
+      color: #f5c842;
+      letter-spacing: 2px;
+    }
+
+    .waiting-text {
+      color: #888;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .pulse {
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .podium-place {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+    .podium-block {
+      width: 90px;
+      border-radius: 8px 8px 0 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 900;
+    }
+
+    .podium-name {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-align: center;
+      max-width: 90px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .podium-score {
+      font-size: 0.75rem;
+      color: #f5c842;
+      font-weight: 700;
+    }
+
+    @keyframes podiumRise {
+      from { transform: scaleY(0); transform-origin: bottom; opacity: 0; }
+      to { transform: scaleY(1); transform-origin: bottom; opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HOME SCREEN -->
+  <div id="homeScreen">
+    <h1>🎬 FC Party</h1>
+    <p class="tagline">Real-time movie trivia</p>
+
+    <div class="card">
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('host')">Host a Game</button>
+        <button class="tab" onclick="switchTab('join')">Join a Game</button>
+      </div>
+
+      <!-- HOST TAB -->
+      <div class="section active" id="hostSection">
+        <label>Your Name</label>
+        <input type="text" id="hostName" placeholder="e.g. Alex" maxlength="20" />
+
+        <label>Pick an Emoji</label>
+        <div class="emoji-picker" id="hostEmojiPicker"></div>
+
+        <p class="error" id="hostError">Please enter your name!</p>
+        <button class="btn btn-primary" onclick="createRoom()">Create Room →</button>
+      </div>
+
+      <!-- JOIN TAB -->
+      <div class="section" id="joinSection">
+        <label>Room Code</label>
+        <input type="text" id="joinCode" placeholder="e.g. ABC123" maxlength="6"
+          style="text-transform:uppercase; letter-spacing: 4px; font-size: 1.3rem;" />
+
+        <label>Your Name</label>
+        <input type="text" id="joinName" placeholder="e.g. Jordan" maxlength="20" />
+
+        <label>Pick an Emoji</label>
+        <div class="emoji-picker" id="joinEmojiPicker"></div>
+
+        <p class="error" id="joinError">Please fill in all fields!</p>
+        <button class="btn btn-primary" onclick="joinRoom()">Join Game →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOST LOBBY SCREEN -->
+  <div id="lobbyScreen">
+    <h1>🎬 FC Party</h1>
+    <p class="tagline pulse">Waiting for players...</p>
+
+    <div class="room-code-box">
+      <div class="room-code-label">Room Code</div>
+      <div class="room-code" id="displayRoomCode">------</div>
+    </div>
+
+    <div class="players-list">
+      <div class="players-title">Players Joined</div>
+      <div id="hostPlayersList"></div>
+    </div>
+
+    <button class="btn btn-primary" id="startBtn" onclick="startGame()" disabled>
+      Start Game →
+    </button>
+  </div>
+
+  <!-- PLAYER LOBBY SCREEN -->
+  <div id="playerLobbyScreen">
+    <h1>🎬 FC Party</h1>
+    <p class="tagline pulse">Game starting soon...</p>
+
+    <div class="room-code-box">
+      <div class="room-code-label">You're in!</div>
+      <div class="room-code" id="playerRoomCode">------</div>
+    </div>
+
+    <div class="players-list">
+      <div class="players-title">Players in Room</div>
+      <div id="playersList"></div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+  <!-- GAME SCREEN -->
+<div id="gameScreen" style="display:none; flex-direction:column; align-items:center; width:100%; max-width:600px;">
+  
+  <div style="display:flex; justify-content:space-between; width:100%; margin-bottom:20px; align-items:center;">
+    <div style="font-size:1.5rem; font-weight:900; color:#f5c842;">🎬 CineBlitz</div>
+    <div style="background:#1a1a2e; border:1px solid #2a2a4a; border-radius:8px; padding:8px 16px; font-size:0.8rem; color:#888; letter-spacing:2px;">
+      ROUND <span id="roundNum">1</span>
+    </div>
+  </div>
+
+  <!-- Timer -->
+  <div style="position:relative; margin-bottom:24px; width:100%;">
+    <div style="background:#1a1a2e; border-radius:999px; height:8px; width:100%; overflow:hidden;">
+      <div id="timerBar" style="height:100%; background:#f5c842; width:100%; transition:width 1s linear;"></div>
+    </div>
+    <div style="text-align:center; margin-top:8px; font-size:2rem; font-weight:900; color:#f5c842;" id="timerNum">20</div>
+  </div>
+
+  <!-- Prompt -->
+  <div style="background:#1a1a2e; border:1px solid #2a2a4a; border-radius:16px; padding:28px; width:100%; margin-bottom:20px; text-align:center;">
+    <div style="font-size:0.7rem; letter-spacing:4px; text-transform:uppercase; color:#888; margin-bottom:12px;">Your Prompt</div>
+    <div id="promptText" style="font-size:1.3rem; font-weight:700; line-height:1.4;">Loading prompt...</div>
+    <div id="promptSub" style="font-size:0.85rem; color:#888; margin-top:8px;"></div>
+  </div>
+
+  <!-- Answer input -->
+<div style="background:#1a1a2e; border:1px solid #2a2a4a; border-radius:16px; padding:24px; width:100%; margin-bottom:16px;">
+  <div style="font-size:0.7rem; letter-spacing:4px; text-transform:uppercase; color:#888; margin-bottom:12px;">Your Answers</div>
+  
+  <div style="position:relative;">
+    <div style="display:flex; gap:8px; margin-bottom:8px;">
+      <input type="text" id="answerInput" placeholder="Search for a movie..." 
+        style="flex:1; margin-bottom:0;"
+        oninput="onAnswerType(this.value)"
+        onkeydown="onAnswerKeydown(event)" />
+      <button class="btn btn-primary" style="width:auto; padding:12px 20px;" onclick="submitAnswer()">+</button>
+    </div>
+
+    <!-- Dropdown -->
+    <div id="answerDropdown" style="
+      display:none;
+      position:absolute;
+      top:100%;
+      left:0; right:48px;
+      background:#1a1a2e;
+      border:1px solid #f5c842;
+      border-radius:0 0 12px 12px;
+      z-index:100;
+      max-height:200px;
+      overflow-y:auto;
+    "></div>
+  </div>
+
+  <!-- Submitted answers -->
+  <div id="answersSubmitted" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;"></div>
+</div>
+
+  <!-- Score -->
+  <div style="display:flex; gap:12px; width:100%;">
+    <div style="flex:1; background:#1a1a2e; border:1px solid #2a2a4a; border-radius:12px; padding:16px; text-align:center;">
+      <div style="font-size:0.65rem; letter-spacing:3px; text-transform:uppercase; color:#888;">Score</div>
+      <div style="font-size:1.8rem; font-weight:900; color:#f5c842;" id="currentScore">0</div>
+    </div>
+    <div style="flex:1; background:#1a1a2e; border:1px solid #2a2a4a; border-radius:12px; padding:16px; text-align:center;">
+      <div style="font-size:0.65rem; letter-spacing:3px; text-transform:uppercase; color:#888;">Answers</div>
+      <div style="font-size:1.8rem; font-weight:900; color:#f5c842;" id="answerCount">0</div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS SCREEN -->
+<div id="resultsScreen" style="display:none; flex-direction:column; align-items:center; width:100%; max-width:500px;">
+  <h1 style="color:#f5c842; margin-bottom:8px;">🎬 CineBlitz</h1>
+  <p style="color:#888; letter-spacing:2px; text-transform:uppercase; font-size:0.8rem; margin-bottom:24px;">Round Results</p>
+
+  <div style="background:#1a1a2e; border:1px solid #2a2a4a; border-radius:16px; padding:24px; width:100%; margin-bottom:20px;">
+    <div style="font-size:0.7rem; letter-spacing:4px; text-transform:uppercase; color:#888; margin-bottom:16px;">Leaderboard</div>
+    <div id="leaderboard"></div>
+  </div>
+
+  <div style="background:#1a1a2e; border:1px solid #2a2a4a; border-radius:16px; padding:24px; width:100%; margin-bottom:20px;">
+    <div style="font-size:0.7rem; letter-spacing:4px; text-transform:uppercase; color:#888; margin-bottom:16px;">Your Answers This Round</div>
+    <div id="yourAnswersReview"></div>
+  </div>
+
+  <div id="hostNextBtn" style="display:none; width:100%; display:flex; flex-direction:column; gap:12px;">
+  <button class="btn btn-primary" onclick="nextRound()">Next Round →</button>
+  <button class="btn" style="background:transparent; border:1px solid #444; color:#888;" onclick="endGame()">End Game</button>
+</div>
+  <div id="playerWaitNext" style="display:none; color:#888; font-size:0.85rem; letter-spacing:2px;" class="pulse">
+    Waiting for host...
+  </div>
+</div>
+
+<!-- END GAME SCREEN -->
+<div id="endGameScreen" style="display:none; flex-direction:column; align-items:center; width:100%; max-width:500px; text-align:center;">
+  
+  <div style="font-size:0.7rem; letter-spacing:5px; text-transform:uppercase; color:#888; margin-bottom:12px;">— The End —</div>
+  <h1 style="color:#f5c842; font-size:2.5rem; margin-bottom:4px;">🎬 That's a Wrap!</h1>
+  <p style="color:#888; letter-spacing:2px; text-transform:uppercase; font-size:0.8rem; margin-bottom:32px;">Final Results</p>
+
+  <!-- Podium -->
+  <div id="podium" style="display:flex; align-items:flex-end; justify-content:center; gap:12px; margin-bottom:32px; width:100%;"></div>
+
+  <!-- Full leaderboard -->
+  <div style="background:#1a1a2e; border:1px solid #2a2a4a; border-radius:16px; padding:24px; width:100%; margin-bottom:24px;">
+    <div style="font-size:0.7rem; letter-spacing:4px; text-transform:uppercase; color:#888; margin-bottom:16px;">Full Rankings</div>
+    <div id="finalLeaderboard"></div>
+  </div>
+
+  <!-- Stats -->
+  <div style="display:flex; gap:12px; width:100%; margin-bottom:24px;">
+  <div style="flex:1; background:#1a1a2e; border:1px solid #2a2a4a; border-radius:12px; padding:16px; text-align:center;">
+    <div style="font-size:0.65rem; letter-spacing:3px; text-transform:uppercase; color:#888;">Total Rounds</div>
+    <div style="font-size:2rem; font-weight:900; color:#f5c842;" id="finalRounds">0</div>
+  </div>
+  <div style="flex:1; background:#1a1a2e; border:1px solid #2a2a4a; border-radius:12px; padding:16px; text-align:center;">
+    <div style="font-size:0.65rem; letter-spacing:3px; text-transform:uppercase; color:#888;" id="finalSecondLabel">Players</div>
+    <div style="font-size:2rem; font-weight:900; color:#f5c842;" id="finalPlayerCount">0</div>
+  </div>
+</div>
+
+  <!-- Play again (host only) -->
+  <div id="endHostBtn" style="display:none; width:100%;">
+    <button class="btn btn-primary" onclick="restartGame()">Play Again 🎬</button>
+  </div>
+  <div id="endPlayerWait" style="display:none; color:#888; font-size:0.85rem; letter-spacing:2px;" class="pulse">
+    Waiting for host...
+  </div>
+
+</div>
+
+<!-- HOST DASHBOARD -->
+<div id="hostDashboard" style="display:none; flex-direction:column; align-items:center; width:100%; max-width:680px;">
+
+  <div style="display:flex; justify-content:space-between; width:100%; margin-bottom:20px; align-items:center;">
+    <div style="font-size:1.5rem; font-weight:900; color:#f5c842;">🎬 CineBlitz</div>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <div style="background:#1a1a2e; border:1px solid #2a2a4a; border-radius:8px; padding:8px 16px; font-size:0.8rem; color:#888; letter-spacing:2px;">
+        ROUND <span id="hostRoundNum">1</span>
+      </div>
+      <div style="background:#1a1a2e; border:1px solid #2a2a4a; border-radius:8px; padding:8px 16px; font-size:0.8rem; color:#f5c842; letter-spacing:2px;">
+        <span id="hostRoomCodeDisplay"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Current prompt -->
+  <div style="background:#1a1a2e; border:1px solid #f5c842; border-radius:16px; padding:24px; width:100%; margin-bottom:20px; text-align:center;">
+    <div style="font-size:0.7rem; letter-spacing:4px; text-transform:uppercase; color:#888; margin-bottom:10px;">Current Prompt</div>
+    <div id="hostPromptText" style="font-size:1.4rem; font-weight:700;">Loading...</div>
+    <div id="hostPromptSub" style="font-size:0.85rem; color:#888; margin-top:6px;"></div>
+  </div>
+
+  <!-- Live leaderboard -->
+  <div style="background:#1a1a2e; border:1px solid #2a2a4a; border-radius:16px; padding:24px; width:100%; margin-bottom:20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <div style="font-size:0.7rem; letter-spacing:4px; text-transform:uppercase; color:#888;">Live Leaderboard</div>
+      <div style="font-size:0.7rem; color:#888;" id="hostAnswersSoFar"></div>
+    </div>
+    <div id="hostLiveLeaderboard"></div>
+  </div>
+
+  <!-- End round button -->
+  <div style="display:flex; gap:12px; width:100%;">
+    <button class="btn btn-primary" onclick="endRound()">End Round →</button>
+  </div>
+
+</div>
+
+<!-- HOST RESULTS SCREEN -->
+<div id="hostResultsScreen" style="display:none; flex-direction:column; align-items:center; width:100%; max-width:680px;">
+
+  <h1 style="color:#f5c842; margin-bottom:8px;">🎬 Round Over!</h1>
+  <p style="color:#888; letter-spacing:2px; text-transform:uppercase; font-size:0.8rem; margin-bottom:24px;">Results</p>
+
+  <div style="background:#1a1a2e; border:1px solid #2a2a4a; border-radius:16px; padding:24px; width:100%; margin-bottom:20px;">
+    <div style="font-size:0.7rem; letter-spacing:4px; text-transform:uppercase; color:#888; margin-bottom:16px;">Leaderboard</div>
+    <div id="hostResultsLeaderboard"></div>
+  </div>
+
+  <div style="display:flex; gap:12px; width:100%;">
+    <button class="btn btn-primary" onclick="nextRound()">Next Round →</button>
+    <button class="btn" style="background:transparent; border:1px solid #444; color:#888;" onclick="endGame()">End Game</button>
+  </div>
+
+</div>
+
+</body>
+</html>
